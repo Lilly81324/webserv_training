@@ -1,0 +1,316 @@
+
+execve:
+	#include <unistd.h>
+	int execve(const char *pathname, char *const _Nullable argv[],
+				char *const _Nullable envp[]);
+		Runs a program with arguments
+		pathname: the local path to a binary to be ran
+		argv: Nulled list of strings for the arguments to run the program with
+		envp: Nulled list of strings that include the enviroment variables
+		returns: -1 if error, !-1 if nominal
+
+pipe:
+	#include <unistd.h>
+	int pipe(int pipefd[2]);
+		Creates a pipe
+		pipefd: array of 2 integers, [0] being read endd, [1] being write end
+		returns: on success 0, on error -1
+
+strerror:
+	#include <string.h>
+	char *strerror(int errnum);
+	Returns a string filled with a description based on input
+		errnum:	An integer representing the error number to handle
+		returns: A string of an error message
+
+gai_strerror:
+	#include <netdb.h>
+	const char *gai_strerror(int ecode);
+		Like strerror
+		ecode: An error code based on the netbd.h EAI_X error codes
+		returns:  A string of an error message
+
+errno:
+	#include <errno.h>
+	Not a function
+		Sort of a global variable errno, which will indicate different error types
+
+fork:
+	#include <unistd.h>
+	pid_t fork(void);
+		Creates a child process
+		returns: -1 if error, 0 in child process, pid of child process in parent
+
+
+htons, htonl, ntohs, ntohl:
+		Converts numbers endian type, as hosts and networks differ
+		(Host to Network makes little to big endian)
+		Use the "s" for converting 16 bit numbers like Port Numbers
+		Use the "l" for converting 32 bit numbers like IP addresses
+			short htons(short num)
+			short ntohs(short num)
+			int htonl(int num)
+			int ntohl(int num)
+			num: Number to convert
+			returns: bit pattern adjusted for the change
+
+
+
+File Descriptors:----------------------------------------------------------
+
+dup:
+	#include <unistd.h>
+	int dup(int oldfd);
+		Makes a shallow copy of the passed fd, meaning same file offset, as they stay linked
+		(Reading from one also moves the other)
+		oldfd: The fd to copy
+		returns: value of the copy fd
+
+dup2:
+	#include <unistd.h>
+	int dup2(int oldfd, int newfd);
+		Redirects one fd to be referencing a different result
+		(newfd points at oldfd now)
+		oldfd: The fd to change reference to target
+		newfd: The target fd
+		returns: 0 if nominal, -1 if error
+
+select:
+	#include <sys/select.h>
+	int select(int nfds, fd_set *_Nullable restrict readfds,
+	fd_set *_Nullable restrict writefds,
+	fd_set *_Nullable restrict exceptfds,
+	struct timeval *_Nullable restrict timeout);
+	Monitors multiple fds if the respectiveo peration is available
+		nfds:Should be 1 higher then your highest tracked fd
+		readfds: List of fds to monitor for reading
+		writefds: List of fds to monitor for writing
+		exceptfds: List of fds to monitor for exceptions
+		timeout: Timewindow, when monitoring stops (NULL means forever)
+		returns: Number of fd ready, 0 if timeout, -1 if error
+		(fd_sets use the FD_ZERO, FD_SET, etc. macros to create the sets
+		 the sets are modified on return to only include the ready ones
+		 us FD_ISSET() to check for ready ones)
+
+poll:
+	#include <poll.h>
+	int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+	Similar to select(), monitors for events and notes down which ones happened
+	fds: Structure describing each fd to monitor, and what to monitor for
+	nfds: Number of fds to monitor
+	timeout: Amount of milliseconds to wait until timeout, -1 means forever, 0 means dont wait
+	returns: Amount of fds where any moitored event triggered, or -1 if error
+
+epoll: (Linux exclusive)
+	#include <sys/epoll.h>
+	int epoll_create(int size);
+		Create a new epoll instance
+		size: No longer used, but should be bigger then 0
+		returns: File descriptor to this epoll instance
+	int epoll_ctl(int epfd, int op, int fd, truct epoll_event *_Nullable event);
+		Perform actions on our epoll instance for a certain fd
+		epfd: Fd of our epoll instance
+		op: Number representing EPOLL_CTL_ADD/MOD/DEL the operation to perform
+		fd: the fd to perform the action with
+		event: An Object linked to the passed fd, specifies actions to monitor for
+		returns: succes returns 0, failure returns -1
+	int epoll_wait(int epfd, struct epoll_event events[.maxevents], int maxevents, int timeout);
+		Waits for I/O operation to happen in our epoll instance
+		epfd: Fd of our epoll instance
+		events[maxevents]: Used to store information about the events which were triggered on each fd
+		maxevents: Has to be bigger then 0, the amount of actions that can get ready before we return
+		timeout: Number of milliseconds before timeout
+		returns: Number of file descriptors that are "ready"
+
+kqueue: (macOS exclusive)
+	#include	<sys/event.h>
+	Conceptually the same as epoll
+	int kqueue(void)
+		Creates an event queue
+		returns: fd for our event queue
+	int kevent(int kq, const struct	kevent *changelist, int nchanges, 
+	           struct kevent *eventlist, int nevents, const struct	timespec *timeout);
+		kq: fd of our kqueue instance
+		changelist: List of events for ?
+		nchanges: Number of events for changelist
+		eventlist: List of events for ?
+		nevnets: Number of events for eventlist
+		timeout: Timeout value or struct
+
+Files:----------------------------------------------------
+
+stat:
+	#include <sys/stat.h>
+	int stat(const char *restrict pathname, struct stat *restrict statbuf);
+		Saves files information into a structure
+		pathname: Name of the file to look at
+		statbuf: Buffer to save files information into
+		returns: Normal 0, Error -1
+
+chdir:
+	#include <unistd.h>
+	int chdir(const char *path);
+		Change current working directory to path
+		path: The new path to move to
+		returns: 0 on succcess, -1 if error
+
+opendir:
+	#include <sys/types.h>
+	#include <dirent.h>
+	DIR *opendir(const char *name);
+		Opens a directory into a structure
+		name: Name/path of directory to opendir
+		returns: Pointer to the directories structure
+
+readdir:
+	#include <dirent.h>
+	struct dirent *readdir(DIR *dirp);
+		Give back the next entry in the current directory streams position
+		dirp: Directory stream to read from
+		returns: Entry for the next file object
+
+closedir:
+	#include <sys/types.h>
+	#include <dirent.h>
+	int closedir(DIR *dirp);
+		Closes the Directory stream
+		dirp: Directory stream to closedir
+		returns: Normal 0, Error -1
+
+Sockets:----------------------------------------------------------------
+
+socket:
+	#include <sys/socket.h>
+	int socket(int domain, int type, int protocol);
+		Creates a comunication stream between two processes
+		domain:	type of connection to create (IPv4, IPv6, Local, etc.)
+		type: type of comunication (SOCK_STREAM most likely)
+		protocol: type of protocoll to use, [type parameter] may allow multiple protocols,
+			but its likely just going to be 0, letting system decide which
+		returns: -1 if error, nominally the fd for our new stream
+		Example: int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+			Creates an IPv4 data stream with a two way byte based protocol
+	
+socketpair:
+	#include <sys/socket.h>
+	int socketpair(int domain, int type, int protocol, int sv[2]);
+		A lot like socket(), but with two fds
+		sv: sets fds to the 2 created stream fds
+		returns: 0 if normal, -1 if error
+
+bind:
+	#include <sys/socket.h>
+	int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+		Binds a socket to an IP and port
+		sockfd: Socket fd
+		addr: sockaddr structure that defines address and port
+		addrelen: size of addr's data structure
+		returns: normal 0, error -1
+		Example:
+			struct sockaddr_in addr;
+			std::memset(&addr, 0, sizeof(addr));
+			addr.sin_family = AF_INET;
+			addr.sin_addr.s_addr = INADDR_ANY;
+			addr.sin_port = htons(8080);
+			bind(sockfd, (struct sockaddr*)&addr, sizeof(addr));
+
+listen:
+	#include <sys/socket.h>
+	int listen(int sockfd, int backlog);
+		Mark sockfd as a receiving socket, and wait to receive packets
+		sockfd: The sockets fd to specify
+		backlog: Maximum number of connections trying to connect to this socket at the same time
+		returns: normal 0, error -1
+		Example: listen(server_fd, 10)
+			Listen on the server_fd socket with a maximum of 10 connections
+
+accept:
+	#include <sys/socket.h>
+	int accept(int sockfd, struct sockaddr *_Nullable restrict addr, socklen_t *_Nullable restrict addrlen);
+		Creates a new socket for the first connection on the sockfd socket
+		sockfd: Socket that is listening
+		addr: Structure to save connectors IP and port into
+		addrlen: size of addr
+		returns: error -1, normally a new sockets fd, which this will be writing to
+		Example:
+			struct sockaddr_in client_addr;
+			socklen_t client_len = sizeof(client_addr);
+			int client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
+
+send:
+	#include <sys/socket.h>
+	ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+		Sends bytes to a socket
+		sockfd: Fd of our socket
+		buf: Array of bytes to send
+		len: Number of bytes to send
+		flags: Special flags if needed
+		returns: Number of bytes sent, or -1 on error
+
+recv:
+	#include <sys/socket.h>
+	size_t recv(int sockfd, void buf[.size], size_t size, int flags);
+		Recevies Bytes from socket
+		sockfd: Fd of socket
+		buf: Array of bytes to receive
+		size: Number of bytes to receive
+		flags: Special flags if needed
+		returns:  Number of bytes sent, 0 if socket was shut down orderly, or -1 on error
+
+connect:
+	#include <sys/socket.h>
+	int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+		Tries to connect to a certain socket at an adresses
+		sockfs: Socket to connect to
+		addr: Adress structure (IP and port)
+		addrlen: Lenght of the addr object
+		returns: Normal 0, Error -1
+
+getaddrinfo:
+	#include <sys/types.h>
+	#include <sys/socket.h>
+	#include <netdb.h>
+	int getaddrinfo(const char *restrict node, const char *restrict service,
+                    const struct addrinfo *restrict hints, struct addrinfo **restrict res);
+		Give back linked list of sockaddr structures to connect to our target
+		node: Hostname or IP string to connect to
+		service: Port Number
+		hints: Preferences about which protocoll is preferred (IPv4, IPv6)
+		res: Storage for the created list of potential sockets to connect to
+		returns: Normal 0, or non zero error codes (for gai_strerror)
+
+freeaddrinfo:
+	#include <sys/types.h>
+	#include <sys/socket.h>
+	#include <netdb.h>
+	void freeaddrinfo(struct addrinfo *res);
+		Frees adress info linked list
+		res: Linked List with adress info
+
+setsockopt:
+	#include <sys/socket.h>
+	int setsockopt(int socket, int level, int option_name, 
+	               const void *option_value, socklen_t option_len);
+		Changes behaviour of an existing socket
+		socketfd: Fd of target socket
+		level: protocol level of our option_len
+		name: name of the option to set
+		option_value: value to change our option to
+		option_len:  length of value of our option
+		returns: Normal 0, Error -1
+
+getsockname:
+	#include <sys/socket.h>
+	int getsockname(int sockfd, struct sockaddr *restrict addr, socklen_t *restrict addrlen);
+		Gets adress of the specified socket
+		sockfd: Fd of our target socket
+		addr: Adress structure to store it inside
+		addrlen: Length of the addr object
+
+getprotobyname:
+	#include <netdb.h>
+	struct protoent *getprotobyname(const char *name);
+		Returns an entry for which protocoll is associated with a given protocoll number
+		name: string containing the protocal name in human readable form
+		returns: Structure for the specific protocoll
+		(can be used for socket)

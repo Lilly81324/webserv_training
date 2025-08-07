@@ -1,0 +1,39 @@
+
+7 Application (Filing a letter)
+	User enters a website like https://example.com,
+	requesting the current page that is stored there.
+	So a GET request is sent out for that current pages html file, with the current Header
+	This is sent out as puure text
+	-----------------------------
+	Receives: https://example.com
+	Transmits: HTTP GET rquest from Host: example.com 
+	for the File:/index.html with User-Agent ... (Data)
+
+6 Presentation (Translator)
+	If package is sent out, encryption happens
+	If package is received, decryption happens
+	This happens through the TLS handshake
+	
+5 Session
+	Sets up data exchanges if multiple are needed
+	Handles authentication and re- 
+	Can reconnect, and establish connections if session isnt concluded
+	Once all exchanges concluded, session ends
+
+4 Transport (Postal Office)
+	Creates chunks
+	Port Numbers are added to our chunks according to TCP/UDP (for Sender and Receiver)
+	Adds Sequencing Numbers / Indices for identifying chunks
+	Can check if chunks were not received (TCP only)
+
+3 Network (Setting p Delivery Truck)
+	Creates packets (Source Ip, Target IP, Protocoll Indicator, Fragment Index, Data)
+	Routing path is decided, over which paths to go to the Target
+	The chunks are fragmented if neccesary into smaller packets
+	Then IP adresses (for Sender and Receiver) are added to each package
+
+2 Data Link
+	MAC adresses are added to package
+
+1 Physical
+	Bits turned to Signals, signals are sent out over media (wire, cable, wave)
