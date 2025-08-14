@@ -1,0 +1,37 @@
+Setup of a Request
+A client conencts to a Listener
+Each Listener has a specific URL and Port that they want to connect to.
+Through our config file we can have multiple servers (virtual servers),
+where two might have the same port, but different URLs or
+the same URL but different ports.
+So its possible that our Listener might conenct to a bunch of different virtual servers.
+In order to trackk all the servers that the listener should have acces to,
+we store their socket fd in an array to identify them.
+Then information is passed into the specific socket.
+Event Loop keeps track of all Listeners (fds).
+When EventLoop sees that onReadable or onWritabele changed state
+(got input or output for Vir. Serv.),
+then we build the request form
+
+Building a HttpRequest
+HttpRequest receives the raw data from the stream, and creates the Request.
+For this it needs Headers and Cookies.
+Then it is moved into the Server Pipeline.
+Every Request is a specific method of type: [get, put, patch, delete, post]
+post = update information
+put = upload resources
+patch = sort of a mix of post / put
+get = receive requested information back
+delete = remove something at the target
+Different Methods create a different layout for the Request (missing body)
+
+Handling a Request
+The Serverpipeline has a request form.
+The pipeline performs a check on the HttpRequest, if passed,
+then the request is given to a Handler.
+A Handler gets a request and puts it into CGI.
+CGI essentially executes the request.
+When CGI is done, information is returned and a response is built with this information.
+This information is returned.
+
+All of this is handled serverside

@@ -1,0 +1,14 @@
+Get Ticket
+Make a commit with [NEW]
+Write code
+Finsih code with [END]
+Auto pull request prepared -> click and open it
+Merge dev into my branch
+Await comments and approval
+Fix issues from merge conflicts and peer written comments
+->Push those commits
+
+1) Pass autro tests 
+2) Pass peeer review
+2) Pass Merging Conflicts
+4) Bracnh up to Date (merged FROM dev)- 
