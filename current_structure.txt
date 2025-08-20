@@ -1,0 +1,76 @@
+If the program starts without arguments, run it with the default config file
+Otherwise, take the first argument as config file
+
+Then create a blank ServerConfig
+Populate the ServerConfig based on the config files input
+	Read whole file into output stream
+	Turns output stream into string
+	Seperate string into tokens
+	Based on input, set up the Server Config, meaning creating multiple Virtual servers,
+	each VS having one IP and port for listening
+	Then check for duplicate Virtual Servers
+	Any misconfiguration throws a std::runtime_error
+
+Then create a Server based off the ServerConfig
+The Server has one EventLoop, ServerConfig and multiple Listeners,
+as well as a list of Ip-Adress + Port Combinations
+
+Store our Servers adress as static memory and a global variable, so its accesible everywhere
+
+Bind the SIGINT and SIGTERM signals to stop our server correctly without leaking
+
+Start our server, catching any errors
+	Prepare listeners, for each Virtual Server from our ServerConfig:
+		Set up its index, port and IP/host in a vector
+	Then for each listener in the stored vector
+		Create a socket for each
+			Get adress information for this host and port
+			Set up a socket based on this information
+			Bind our socket to the specific current host and port
+			Tell the socket to listen
+			Repeat theese steps until the first successfully created socket
+		Make a Listener class with this socket, host and port and index
+		Store that listener in our vector
+	Store the Listener vector in our server
+	For each Listener stored as such
+		Add them to our EventLoop as Listeners
+		Set up the polling information for this Listener
+		???void Server::buildHostMaps()
+	Then all Listeners are deleted
+
+Run the server
+	If there are no Listeners, start the Server like before
+	Run the EventLoop
+		Poll the fds from our Loop
+		Should poll fail, stop the Loop
+		Make a list for each poll fd
+		Add to the list each poll fds fd and its revents
+		For each element in list
+			Get fd
+			Get revents
+			Get index of fd in poll fd list
+			Get the Handler for that index
+			Handler then handles the fd and revents
+				If Issue with revents, 
+					Close Client Connection by closing its fd
+					Then remove this fd from the EventLoop
+				If revents shows fd has data to Read
+					Read Data from Client
+						Store Data into stack allocated buffer, 
+						but only store at most as much as there is left in buffer
+						Then turn that Data into an HttpRequest
+						Then get the virtual servers index for the port+host combo
+						???Routing???
+						???
+						Prepare the response by writing "hello" into the output !PLACEHOLDER!
+						Set the status of this connection to writing
+					If the Connection was closed, remove this fd from the EventLoop
+					If this Connection wants to write, 
+					change the EventLoops current fd to "wants to write data"
+				If revents shows fd has data to write
+					Get string to output from the current data in outBuffer and offset
+					Send this data to the ClientConnections fd
+					Adjust Offset
+					If the Connection was closed, remove this fd from the EventLoop
+					If this Connection wants to write, set EventLoop to reading
+	repeat
